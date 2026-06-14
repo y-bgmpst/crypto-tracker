@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Crypto Price Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Live Marktpreise</p>
+          <h1>Crypto Price Tracker</h1>
+        </div>
+        <button class="refresh-button" id="refreshButton" type="button">
+          Aktualisieren
+        </button>
+      </header>
+
+      <section class="status-row" aria-live="polite">
+        <span id="statusText">Preise werden geladen...</span>
+        <span id="lastUpdated"></span>
+      </section>
+
+      <section class="price-grid" id="priceGrid" aria-label="Kryptowaehrungspreise">
+        <article class="coin-card" data-coin="bitcoin" data-name="Bitcoin" data-symbol="BTC" role="button" tabindex="0">
+          <div class="coin-topline">
+            <div>
+              <h2>Bitcoin</h2>
+              <p>BTC</p>
+            </div>
+            <span class="coin-symbol">BTC</span>
+          </div>
+          <p class="price" data-price>--</p>
+          <p class="change" data-change>24h: --</p>
+        </article>
+
+        <article class="coin-card" data-coin="monero" data-name="Monero" data-symbol="XMR" role="button" tabindex="0">
+          <div class="coin-topline">
+            <div>
+              <h2>Monero</h2>
+              <p>XMR</p>
+            </div>
+            <span class="coin-symbol">XMR</span>
+          </div>
+          <p class="price" data-price>--</p>
+          <p class="change" data-change>24h: --</p>
+        </article>
+
+        <article class="coin-card" data-coin="litecoin" data-name="Litecoin" data-symbol="LTC" role="button" tabindex="0">
+          <div class="coin-topline">
+            <div>
+              <h2>Litecoin</h2>
+              <p>LTC</p>
+            </div>
+            <span class="coin-symbol">LTC</span>
+          </div>
+          <p class="price" data-price>--</p>
+          <p class="change" data-change>24h: --</p>
+        </article>
+
+        <article class="coin-card" data-coin="solana" data-name="Solana" data-symbol="SOL" role="button" tabindex="0">
+          <div class="coin-topline">
+            <div>
+              <h2>Solana</h2>
+              <p>SOL</p>
+            </div>
+            <span class="coin-symbol">SOL</span>
+          </div>
+          <p class="price" data-price>--</p>
+          <p class="change" data-change>24h: --</p>
+        </article>
+      </section>
+
+      <section class="chart-panel" id="chartPanel" aria-live="polite">
+        <div class="chart-header">
+          <div>
+            <p class="eyebrow">Historie</p>
+            <h2 id="chartTitle">Waehle eine Waehrung</h2>
+          </div>
+          <div class="range-controls" aria-label="Chart-Zeitraum">
+            <button type="button" class="range-button active" data-days="1">1D</button>
+            <button type="button" class="range-button" data-days="3">3D</button>
+            <button type="button" class="range-button" data-days="7">1W</button>
+            <button type="button" class="range-button" data-days="30">1M</button>
+            <button type="button" class="range-button" data-days="365">1J</button>
+            <button type="button" class="range-button" data-days="max">All Time</button>
+          </div>
+        </div>
+
+        <p class="chart-status" id="chartStatus">Klicke auf BTC, XMR, LTC oder SOL, um den Graphen zu laden.</p>
+
+        <div class="chart-canvas-wrap">
+          <canvas id="historyChart" width="1000" height="420">
+            Dein Browser unterstuetzt Canvas nicht.
+          </canvas>
+        </div>
+
+        <dl class="chart-stats" id="chartStats">
+          <div>
+            <dt>Start</dt>
+            <dd id="statStart">--</dd>
+          </div>
+          <div>
+            <dt>Aktuell</dt>
+            <dd id="statCurrent">--</dd>
+          </div>
+          <div>
+            <dt>Hoch</dt>
+            <dd id="statHigh">--</dd>
+          </div>
+          <div>
+            <dt>Tief</dt>
+            <dd id="statLow">--</dd>
+          </div>
+        </dl>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
