@@ -9,6 +9,7 @@ const coinMeta = {
 const refreshButton = document.querySelector("#refreshButton");
 const priceSource = document.querySelector("#priceSource");
 const themeToggle = document.querySelector("#themeToggle");
+const autoUpdateToggle = document.querySelector("#autoUpdateToggle");
 const statusText = document.querySelector("#statusText");
 const lastUpdated = document.querySelector("#lastUpdated");
 const coinCards = document.querySelectorAll(".coin-card");
@@ -30,7 +31,12 @@ let activeLinePoints = [];
 let historyRequestId = 0;
 let selectedSource = "coingecko";
 let activeCurrency = "EUR";
+let autoUpdateEnabled = false;
+let autoUpdateTimer = null;
+let nextAutoUpdateAt = null;
 
+const autoUpdateIntervalMs = 5 * 60 * 1000;
+const autoUpdateErrorBackoffMs = 10 * 60 * 1000;
 const percentFormatter = new Intl.NumberFormat("de-DE", {
   maximumFractionDigits: 2,
   minimumFractionDigits: 2,
@@ -72,7 +78,7 @@ function getCompactCurrencyFormatter(currency) {
   });
 }
 
-async function loadPrices() {
+async function loadPrices({ scheduleNext = true } = {}) {
   setLoading(true);
 
   try {
@@ -83,11 +89,19 @@ async function loadPrices() {
     statusText.textContent = `Preise erfolgreich geladen via ${provider.label}`;
     statusText.classList.remove("error");
     lastUpdated.textContent = `Zuletzt aktualisiert: ${new Date().toLocaleTimeString("de-DE")}`;
+
+    if (scheduleNext) {
+      scheduleAutoUpdate(autoUpdateIntervalMs);
+    }
   } catch (error) {
     statusText.textContent = "Preise konnten nicht geladen werden. Bitte spaeter erneut versuchen.";
     statusText.classList.add("error");
     lastUpdated.textContent = "";
     console.error(error);
+
+    if (scheduleNext) {
+      scheduleAutoUpdate(autoUpdateErrorBackoffMs);
+    }
   } finally {
     setLoading(false);
   }
@@ -578,6 +592,69 @@ function loadSavedTheme() {
   setTheme(savedTheme ? savedTheme === "dark" : prefersDark);
 }
 
+function setAutoUpdate(enabled) {
+  autoUpdateEnabled = enabled;
+  autoUpdateToggle.setAttribute("aria-pressed", String(enabled));
+  autoUpdateToggle.textContent = enabled ? "Auto Update an" : "Auto Update aus";
+  localStorage.setItem("crypto-tracker-auto-update", enabled ? "on" : "off");
+
+  if (enabled) {
+    scheduleAutoUpdate(autoUpdateIntervalMs);
+  } else {
+    clearAutoUpdate();
+    updateAutoUpdateStatus();
+  }
+}
+
+function scheduleAutoUpdate(delayMs) {
+  if (!autoUpdateEnabled) {
+    return;
+  }
+
+  clearAutoUpdate();
+  nextAutoUpdateAt = Date.now() + delayMs;
+  updateAutoUpdateStatus();
+
+  autoUpdateTimer = window.setTimeout(() => {
+    if (document.hidden) {
+      scheduleAutoUpdate(60 * 1000);
+      return;
+    }
+
+    loadPrices({ scheduleNext: true });
+  }, delayMs);
+}
+
+function clearAutoUpdate() {
+  if (autoUpdateTimer) {
+    window.clearTimeout(autoUpdateTimer);
+    autoUpdateTimer = null;
+  }
+
+  nextAutoUpdateAt = null;
+}
+
+function updateAutoUpdateStatus() {
+  if (!autoUpdateEnabled) {
+    autoUpdateToggle.title = "Automatische Aktualisierung ist deaktiviert";
+    return;
+  }
+
+  if (!nextAutoUpdateAt) {
+    autoUpdateToggle.title = "Automatische Aktualisierung ist aktiv";
+    return;
+  }
+
+  const seconds = Math.max(0, Math.ceil((nextAutoUpdateAt - Date.now()) / 1000));
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  autoUpdateToggle.title = `Naechstes Update in ${minutes}:${String(remainingSeconds).padStart(2, "0")} Minuten`;
+}
+
+function loadSavedAutoUpdate() {
+  setAutoUpdate(localStorage.getItem("crypto-tracker-auto-update") === "on");
+}
+
 coinCards.forEach((card) => {
   card.addEventListener("click", () => selectCoin(card.dataset.coin));
   card.addEventListener("keydown", (event) => {
@@ -600,12 +677,29 @@ rangeButtons.forEach((button) => {
 
 priceSource.addEventListener("change", () => {
   selectedSource = priceSource.value;
+  clearAutoUpdate();
   loadPrices();
 });
 
 themeToggle.addEventListener("click", () => {
   setTheme(!document.body.classList.contains("dark-mode"));
 });
+
+autoUpdateToggle.addEventListener("click", () => {
+  setAutoUpdate(!autoUpdateEnabled);
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!autoUpdateEnabled || document.hidden) {
+    return;
+  }
+
+  if (!nextAutoUpdateAt || Date.now() >= nextAutoUpdateAt) {
+    loadPrices({ scheduleNext: true });
+  }
+});
+
+window.setInterval(updateAutoUpdateStatus, 1000);
 
 window.addEventListener("resize", () => {
   if (activeChartPoints.length > 1) {
@@ -624,4 +718,5 @@ chartCanvas.addEventListener("mouseleave", () => {
 });
 refreshButton.addEventListener("click", loadPrices);
 loadSavedTheme();
+loadSavedAutoUpdate();
 loadPrices();

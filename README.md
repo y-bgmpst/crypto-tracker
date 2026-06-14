@@ -17,6 +17,7 @@ Die App besteht nur aus HTML, CSS und JavaScript. Es gibt keinen Build-Prozess, 
   - CoinPaprika
   - CoinLore
 - Dark Mode mit gespeicherter Einstellung
+- Optionales Auto-Update fuer aktuelle Preise
 - Klickbare Coin-Karten
 - Historien-Graph fuer die ausgewaehlte Kryptowaehrung
 - Zeitraum-Auswahl:
@@ -120,9 +121,10 @@ http://127.0.0.1:8080/
 1. Die App laedt beim Start automatisch die aktuellen Preise.
 2. Ueber das Dropdown `Quelle` kann zwischen CoinGecko, CoinPaprika und CoinLore gewechselt werden.
 3. Mit dem Button `Dark Mode` kann zwischen hellem und dunklem Theme gewechselt werden.
-4. Mit dem Button `Aktualisieren` werden die aktuellen Preise neu geladen.
-5. Durch Klick auf eine Coin-Karte wird unten der Historien-Graph geladen.
-6. Mit den Zeitraum-Buttons kann zwischen `1D`, `3D`, `1W`, `1M`, `1J` und `All Time` gewechselt werden.
+4. Mit dem Button `Auto Update` kann eine automatische Aktualisierung aktiviert werden.
+5. Mit dem Button `Aktualisieren` werden die aktuellen Preise sofort neu geladen.
+6. Durch Klick auf eine Coin-Karte wird unten der Historien-Graph geladen.
+7. Mit den Zeitraum-Buttons kann zwischen `1D`, `3D`, `1W`, `1M`, `1J` und `All Time` gewechselt werden.
 
 ## Technische Details
 
@@ -152,6 +154,7 @@ Enthaelt die komplette App-Logik:
 
 - Laden aktueller Preise
 - Wechsel zwischen mehreren kostenlosen Preisquellen
+- Konservatives Auto-Update alle 5 Minuten
 - Laden historischer Preise
 - Caching bereits geladener Historien-Daten
 - Zeichnen des Graphen mit Canvas
@@ -161,6 +164,9 @@ Enthaelt die komplette App-Logik:
 ## Hinweise
 
 - Die CoinGecko API kann Rate Limits haben. Wenn zu viele Anfragen in kurzer Zeit gestellt werden, kann das Laden kurzzeitig fehlschlagen.
+- Das Auto-Update nutzt ein konservatives Intervall von 5 Minuten und pausiert, wenn der Browser-Tab im Hintergrund ist.
+- Nach einem Ladefehler wartet das Auto-Update 10 Minuten bis zum naechsten Versuch.
+- Auto-Update aktualisiert nur die aktuellen Preise, nicht die Historien-Charts.
 - Die App nutzt Euro (`EUR`) als Preiswaehrung.
 - CoinGecko und CoinPaprika liefern die aktuellen Preise in Euro (`EUR`).
 - CoinLore liefert die einfache Ticker-Route in US-Dollar (`USD`), daher werden CoinLore-Preise in USD angezeigt.
