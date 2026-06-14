@@ -306,6 +306,50 @@ h1 {
   font-weight: 800;
 }
 
+.donation-panel {
+  margin-top: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.donation-header {
+  margin-bottom: 16px;
+}
+
+.donation-header h2 {
+  margin: 0;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+.wallet-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wallet-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #f8fafc;
+}
+
+.wallet-card code {
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 @media (max-width: 900px) {
   .price-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -322,6 +366,10 @@ h1 {
 
   .chart-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wallet-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -362,6 +410,14 @@ h1 {
   }
 
   .chart-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .donation-panel {
+    padding: 18px;
+  }
+
+  .wallet-card {
     grid-template-columns: 1fr;
   }
 }
