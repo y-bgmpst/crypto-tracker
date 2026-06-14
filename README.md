@@ -36,6 +36,7 @@ crypto-tracker/
 ├── index.html
 ├── styles.css
 ├── script.js
+├── LICENSE
 └── README.md
 ```
 
@@ -141,4 +142,6 @@ Enthaelt die komplette App-Logik:
 
 ## Lizenz
 
-Dieses Projekt ist fuer private Nutzung erstellt.
+Dieses Projekt steht unter der GNU General Public License v3.0 oder spaeter (`GPL-3.0-or-later`).
+
+FOSS ist Freiheit. Sharing is caring.
