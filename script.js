@@ -22,6 +22,7 @@ const chartTitle = document.querySelector("#chartTitle");
 const chartStatus = document.querySelector("#chartStatus");
 const chartCanvas = document.querySelector("#historyChart");
 const chartContext = chartCanvas.getContext("2d");
+const chartTooltip = document.querySelector("#chartTooltip");
 const statStart = document.querySelector("#statStart");
 const statCurrent = document.querySelector("#statCurrent");
 const statHigh = document.querySelector("#statHigh");
@@ -30,6 +31,7 @@ const chartCache = new Map();
 let selectedCoin = null;
 let selectedDays = "1";
 let activeChartPoints = [];
+let activeLinePoints = [];
 let historyRequestId = 0;
 
 const currencyFormatter = new Intl.NumberFormat("de-DE", {
@@ -126,6 +128,7 @@ async function loadHistory() {
   const requestId = historyRequestId + 1;
   historyRequestId = requestId;
   setChartLoading(true);
+  hideChartTooltip();
   chartStatus.classList.remove("error");
   chartStatus.textContent = "Historie wird geladen...";
 
@@ -184,7 +187,7 @@ async function loadHistory() {
   }
 }
 
-function drawChart(points) {
+function drawChart(points, hoverIndex = null) {
   const rect = chartCanvas.getBoundingClientRect();
   const pixelRatio = window.devicePixelRatio || 1;
   chartCanvas.width = Math.round(rect.width * pixelRatio);
@@ -220,6 +223,7 @@ function drawChart(points) {
     const y = padding.top + (1 - (point.price - minPrice) / priceRange) * chartHeight;
     return { x, y };
   });
+  activeLinePoints = linePoints;
   const isPositive = points[points.length - 1].price >= points[0].price;
   const lineColor = isPositive ? "#15803d" : "#b42318";
   const gradient = chartContext.createLinearGradient(0, padding.top, 0, height - padding.bottom);
@@ -255,6 +259,31 @@ function drawChart(points) {
   chartContext.stroke();
 
   drawDateLabels(points, width, height, padding);
+
+  if (typeof hoverIndex === "number" && linePoints[hoverIndex]) {
+    drawHoverMarker(linePoints[hoverIndex], lineColor, padding, height);
+  }
+}
+
+function drawHoverMarker(point, lineColor, padding, height) {
+  chartContext.save();
+  chartContext.strokeStyle = "rgba(23, 32, 42, 0.34)";
+  chartContext.lineWidth = 1;
+  chartContext.setLineDash([5, 5]);
+  chartContext.beginPath();
+  chartContext.moveTo(point.x, padding.top);
+  chartContext.lineTo(point.x, height - padding.bottom);
+  chartContext.stroke();
+  chartContext.setLineDash([]);
+
+  chartContext.fillStyle = "#ffffff";
+  chartContext.strokeStyle = lineColor;
+  chartContext.lineWidth = 3;
+  chartContext.beginPath();
+  chartContext.arc(point.x, point.y, 5, 0, Math.PI * 2);
+  chartContext.fill();
+  chartContext.stroke();
+  chartContext.restore();
 }
 
 function drawGrid(width, height, padding, minPrice, maxPrice) {
@@ -295,6 +324,8 @@ function drawDateLabels(points, width, height, padding) {
 
 function clearChart() {
   const rect = chartCanvas.getBoundingClientRect();
+  activeLinePoints = [];
+  hideChartTooltip();
   chartContext.clearRect(0, 0, rect.width, rect.height);
 }
 
@@ -345,6 +376,97 @@ function formatDateLabel(timestamp) {
   return new Date(timestamp).toLocaleDateString("de-DE", options);
 }
 
+function handleChartHover(event) {
+  if (activeChartPoints.length < 2 || activeLinePoints.length < 2) {
+    return;
+  }
+
+  const rect = chartCanvas.getBoundingClientRect();
+  const mouseX = event.clientX - rect.left;
+  const nearestIndex = findNearestPointIndex(mouseX);
+
+  if (nearestIndex === null) {
+    hideChartTooltip();
+    drawChart(activeChartPoints);
+    return;
+  }
+
+  drawChart(activeChartPoints, nearestIndex);
+  showChartTooltip(nearestIndex);
+}
+
+function findNearestPointIndex(mouseX) {
+  const firstPoint = activeLinePoints[0];
+  const lastPoint = activeLinePoints[activeLinePoints.length - 1];
+
+  if (mouseX < firstPoint.x || mouseX > lastPoint.x) {
+    return null;
+  }
+
+  let low = 0;
+  let high = activeLinePoints.length - 1;
+
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+
+    if (activeLinePoints[middle].x < mouseX) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
+
+  const previousIndex = Math.max(low - 1, 0);
+  const nextIndex = Math.min(low, activeLinePoints.length - 1);
+  const previousDistance = Math.abs(activeLinePoints[previousIndex].x - mouseX);
+  const nextDistance = Math.abs(activeLinePoints[nextIndex].x - mouseX);
+
+  return previousDistance <= nextDistance ? previousIndex : nextIndex;
+}
+
+function showChartTooltip(index) {
+  const point = activeChartPoints[index];
+  const linePoint = activeLinePoints[index];
+  const wrapRect = chartCanvas.parentElement.getBoundingClientRect();
+
+  chartTooltip.innerHTML = `
+    <div class="tooltip-date">${formatTooltipDate(point.time)}</div>
+    <div class="tooltip-price">${currencyFormatter.format(point.price)}</div>
+  `;
+  chartTooltip.hidden = false;
+
+  const tooltipWidth = chartTooltip.offsetWidth || 148;
+  const tooltipHeight = chartTooltip.offsetHeight || 64;
+  const left = Math.min(Math.max(linePoint.x + 14, 8), wrapRect.width - tooltipWidth - 8);
+  const top = Math.min(Math.max(linePoint.y - tooltipHeight - 14, 8), wrapRect.height - tooltipHeight - 8);
+
+  chartTooltip.style.left = `${left}px`;
+  chartTooltip.style.top = `${top}px`;
+}
+
+function hideChartTooltip() {
+  chartTooltip.hidden = true;
+}
+
+function formatTooltipDate(timestamp) {
+  const date = new Date(timestamp);
+
+  if (selectedDays === "1") {
+    return date.toLocaleString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  return date.toLocaleString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 coinCards.forEach((card) => {
   card.addEventListener("click", () => selectCoin(card.dataset.coin));
   card.addEventListener("keydown", (event) => {
@@ -367,9 +489,18 @@ rangeButtons.forEach((button) => {
 
 window.addEventListener("resize", () => {
   if (activeChartPoints.length > 1) {
+    hideChartTooltip();
     drawChart(activeChartPoints);
   }
 });
 
+chartCanvas.addEventListener("mousemove", handleChartHover);
+chartCanvas.addEventListener("mouseleave", () => {
+  hideChartTooltip();
+
+  if (activeChartPoints.length > 1) {
+    drawChart(activeChartPoints);
+  }
+});
 refreshButton.addEventListener("click", loadPrices);
 loadPrices();
