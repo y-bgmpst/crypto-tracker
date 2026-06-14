@@ -13,9 +13,24 @@
           <p class="eyebrow">Live Marktpreise</p>
           <h1>Crypto Price Tracker</h1>
         </div>
-        <button class="refresh-button" id="refreshButton" type="button">
-          Aktualisieren
-        </button>
+        <div class="header-actions">
+          <label class="source-control" for="priceSource">
+            <span>Quelle</span>
+            <select id="priceSource">
+              <option value="coingecko">CoinGecko</option>
+              <option value="coinpaprika">CoinPaprika</option>
+              <option value="coinlore">CoinLore</option>
+            </select>
+          </label>
+
+          <button class="mode-toggle" id="themeToggle" type="button" aria-pressed="false">
+            Dark Mode
+          </button>
+
+          <button class="refresh-button" id="refreshButton" type="button">
+            Aktualisieren
+          </button>
+        </div>
       </header>
 
       <section class="status-row" aria-live="polite">
@@ -126,22 +141,22 @@
 
         <div class="wallet-grid">
           <article class="wallet-card">
-            <span class="coin-symbol">BTC</span>
+            <img class="wallet-logo" src="assets/icons/btc.svg" alt="Bitcoin Logo">
             <code>bc1qxdgynztnxpt8t9pdudpuahuuu52rjrex6xxjs9</code>
           </article>
 
           <article class="wallet-card">
-            <span class="coin-symbol">XMR</span>
+            <img class="wallet-logo" src="assets/icons/xmr.svg" alt="Monero Logo">
             <code>85jA1NFm6x7Z7RVxjtNV3vftBYU1YLx1JDwJnNhKPwjLJ4QyHsHLipdbBi7jxzsxd13xwFwqSUJtQMdkx7nBnPbWLetbgwU</code>
           </article>
 
           <article class="wallet-card">
-            <span class="coin-symbol">LTC</span>
+            <img class="wallet-logo" src="assets/icons/ltc.svg" alt="Litecoin Logo">
             <code>ltc1qrw62e07agp8rvkyzmgd78y2uv24hj2g9hzzpuc</code>
           </article>
 
           <article class="wallet-card">
-            <span class="coin-symbol">SOL</span>
+            <img class="wallet-logo" src="assets/icons/sol.svg" alt="Solana Logo">
             <code>EccvtqGyLMLjRjMb8LpKYNk9kWKqLsw6QzVJ4P6g5YAh</code>
           </article>
         </div>

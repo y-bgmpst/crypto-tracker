@@ -1,19 +1,14 @@
 const coins = ["bitcoin", "monero", "litecoin", "solana"];
-const apiUrl = new URL("https://api.coingecko.com/api/v3/simple/price");
 const coinMeta = {
-  bitcoin: { name: "Bitcoin", symbol: "BTC" },
-  monero: { name: "Monero", symbol: "XMR" },
-  litecoin: { name: "Litecoin", symbol: "LTC" },
-  solana: { name: "Solana", symbol: "SOL" },
+  bitcoin: { name: "Bitcoin", symbol: "BTC", paprikaId: "btc-bitcoin", loreId: "90" },
+  monero: { name: "Monero", symbol: "XMR", paprikaId: "xmr-monero", loreId: "28" },
+  litecoin: { name: "Litecoin", symbol: "LTC", paprikaId: "ltc-litecoin", loreId: "1" },
+  solana: { name: "Solana", symbol: "SOL", paprikaId: "sol-solana", loreId: "48543" },
 };
 
-apiUrl.search = new URLSearchParams({
-  ids: coins.join(","),
-  vs_currencies: "usd,eur",
-  include_24hr_change: "true",
-}).toString();
-
 const refreshButton = document.querySelector("#refreshButton");
+const priceSource = document.querySelector("#priceSource");
+const themeToggle = document.querySelector("#themeToggle");
 const statusText = document.querySelector("#statusText");
 const lastUpdated = document.querySelector("#lastUpdated");
 const coinCards = document.querySelectorAll(".coin-card");
@@ -33,36 +28,59 @@ let selectedDays = "1";
 let activeChartPoints = [];
 let activeLinePoints = [];
 let historyRequestId = 0;
+let selectedSource = "coingecko";
+let activeCurrency = "EUR";
 
-const currencyFormatter = new Intl.NumberFormat("de-DE", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 2,
-});
 const percentFormatter = new Intl.NumberFormat("de-DE", {
   maximumFractionDigits: 2,
   minimumFractionDigits: 2,
 });
-const compactCurrencyFormatter = new Intl.NumberFormat("de-DE", {
-  style: "currency",
-  currency: "EUR",
-  notation: "compact",
-  maximumFractionDigits: 2,
-});
+const priceProviders = {
+  coingecko: {
+    label: "CoinGecko",
+    currency: "EUR",
+    fetchPrices: fetchCoinGeckoPrices,
+  },
+  coinpaprika: {
+    label: "CoinPaprika",
+    currency: "EUR",
+    fetchPrices: fetchCoinPaprikaPrices,
+  },
+  coinlore: {
+    label: "CoinLore",
+    currency: "USD",
+    fetchPrices: fetchCoinLorePrices,
+  },
+};
+const eurCurrencyFormatter = getCurrencyFormatter("EUR");
+const compactEurCurrencyFormatter = getCompactCurrencyFormatter("EUR");
+
+function getCurrencyFormatter(currency) {
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+  });
+}
+
+function getCompactCurrencyFormatter(currency) {
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency,
+    notation: "compact",
+    maximumFractionDigits: 2,
+  });
+}
 
 async function loadPrices() {
   setLoading(true);
 
   try {
-    const response = await fetch(apiUrl);
-
-    if (!response.ok) {
-      throw new Error(`API antwortet mit Status ${response.status}`);
-    }
-
-    const prices = await response.json();
+    const provider = priceProviders[selectedSource];
+    const prices = await provider.fetchPrices();
+    activeCurrency = provider.currency;
     updateCards(prices);
-    statusText.textContent = "Preise erfolgreich geladen";
+    statusText.textContent = `Preise erfolgreich geladen via ${provider.label}`;
     statusText.classList.remove("error");
     lastUpdated.textContent = `Zuletzt aktualisiert: ${new Date().toLocaleTimeString("de-DE")}`;
   } catch (error) {
@@ -75,24 +93,92 @@ async function loadPrices() {
   }
 }
 
+async function fetchCoinGeckoPrices() {
+  const url = new URL("https://api.coingecko.com/api/v3/simple/price");
+  url.search = new URLSearchParams({
+    ids: coins.join(","),
+    vs_currencies: "eur",
+    include_24hr_change: "true",
+  }).toString();
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`CoinGecko antwortet mit Status ${response.status}`);
+  }
+
+  return response.json();
+}
+
+async function fetchCoinPaprikaPrices() {
+  const entries = await Promise.all(coins.map(async (coinId) => {
+    const url = new URL(`https://api.coinpaprika.com/v1/tickers/${coinMeta[coinId].paprikaId}`);
+    url.search = new URLSearchParams({ quotes: "EUR" }).toString();
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`CoinPaprika antwortet mit Status ${response.status}`);
+    }
+
+    const ticker = await response.json();
+    const quote = ticker.quotes?.EUR;
+
+    return [coinId, {
+      eur: quote?.price,
+      eur_24h_change: quote?.percent_change_24h,
+    }];
+  }));
+
+  return Object.fromEntries(entries);
+}
+
+async function fetchCoinLorePrices() {
+  const url = new URL("https://api.coinlore.net/api/ticker/");
+  url.search = new URLSearchParams({
+    id: coins.map((coinId) => coinMeta[coinId].loreId).join(","),
+  }).toString();
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`CoinLore antwortet mit Status ${response.status}`);
+  }
+
+  const tickers = await response.json();
+
+  return coins.reduce((prices, coinId) => {
+    const ticker = tickers.find((item) => item.id === coinMeta[coinId].loreId);
+    prices[coinId] = {
+      usd: Number(ticker?.price_usd),
+      usd_24h_change: Number(ticker?.percent_change_24h),
+    };
+    return prices;
+  }, {});
+}
+
 function updateCards(prices) {
+  const currencyKey = activeCurrency.toLowerCase();
+  const changeKey = `${currencyKey}_24h_change`;
+  const formatter = getCurrencyFormatter(activeCurrency);
+
   coinCards.forEach((card) => {
     const coinId = card.dataset.coin;
     const coin = prices[coinId];
     const priceElement = card.querySelector("[data-price]");
     const changeElement = card.querySelector("[data-change]");
-    const change = coin?.eur_24h_change;
+    const price = coin?.[currencyKey];
+    const change = coin?.[changeKey];
 
-    if (!coin || typeof coin.eur !== "number") {
+    if (!coin || typeof price !== "number" || Number.isNaN(price)) {
       priceElement.textContent = "--";
       changeElement.textContent = "24h: --";
       changeElement.className = "change";
       return;
     }
 
-    priceElement.textContent = currencyFormatter.format(coin.eur);
+    priceElement.textContent = formatter.format(price);
 
-    if (typeof change === "number") {
+    if (typeof change === "number" && !Number.isNaN(change)) {
       changeElement.textContent = `24h: ${percentFormatter.format(change)} %`;
       changeElement.className = `change ${change >= 0 ? "positive" : "negative"}`;
     } else {
@@ -211,12 +297,15 @@ function drawChart(points, hoverIndex = null) {
   const firstTime = points[0].time;
   const lastTime = points[points.length - 1].time;
   const timeRange = lastTime - firstTime || 1;
+  const panelColor = getCssVariable("--panel");
+  const lineColorMuted = getCssVariable("--line");
+  const textColorMuted = getCssVariable("--muted");
 
   chartContext.clearRect(0, 0, width, height);
-  chartContext.fillStyle = "#ffffff";
+  chartContext.fillStyle = panelColor;
   chartContext.fillRect(0, 0, width, height);
 
-  drawGrid(width, height, padding, minPrice, maxPrice);
+  drawGrid(width, height, padding, minPrice, maxPrice, lineColorMuted, textColorMuted);
 
   const linePoints = points.map((point) => {
     const x = padding.left + ((point.time - firstTime) / timeRange) * chartWidth;
@@ -267,7 +356,7 @@ function drawChart(points, hoverIndex = null) {
 
 function drawHoverMarker(point, lineColor, padding, height) {
   chartContext.save();
-  chartContext.strokeStyle = "rgba(23, 32, 42, 0.34)";
+  chartContext.strokeStyle = getCssVariable("--muted");
   chartContext.lineWidth = 1;
   chartContext.setLineDash([5, 5]);
   chartContext.beginPath();
@@ -276,7 +365,7 @@ function drawHoverMarker(point, lineColor, padding, height) {
   chartContext.stroke();
   chartContext.setLineDash([]);
 
-  chartContext.fillStyle = "#ffffff";
+  chartContext.fillStyle = getCssVariable("--panel");
   chartContext.strokeStyle = lineColor;
   chartContext.lineWidth = 3;
   chartContext.beginPath();
@@ -286,10 +375,10 @@ function drawHoverMarker(point, lineColor, padding, height) {
   chartContext.restore();
 }
 
-function drawGrid(width, height, padding, minPrice, maxPrice) {
+function drawGrid(width, height, padding, minPrice, maxPrice, lineColorMuted, textColorMuted) {
   const steps = 4;
-  chartContext.strokeStyle = "#e4e9f0";
-  chartContext.fillStyle = "#667085";
+  chartContext.strokeStyle = lineColorMuted;
+  chartContext.fillStyle = textColorMuted;
   chartContext.font = "12px Inter, system-ui, sans-serif";
   chartContext.textBaseline = "middle";
 
@@ -302,7 +391,7 @@ function drawGrid(width, height, padding, minPrice, maxPrice) {
     chartContext.moveTo(padding.left, y);
     chartContext.lineTo(width - padding.right, y);
     chartContext.stroke();
-    chartContext.fillText(compactCurrencyFormatter.format(value), 8, y);
+    chartContext.fillText(compactEurCurrencyFormatter.format(value), 8, y);
   }
 }
 
@@ -310,7 +399,7 @@ function drawDateLabels(points, width, height, padding) {
   const labelPoints = [points[0], points[Math.floor(points.length / 2)], points[points.length - 1]];
   const labelPositions = [padding.left, width / 2, width - padding.right];
 
-  chartContext.fillStyle = "#667085";
+  chartContext.fillStyle = getCssVariable("--muted");
   chartContext.font = "12px Inter, system-ui, sans-serif";
   chartContext.textBaseline = "alphabetic";
 
@@ -322,6 +411,10 @@ function drawDateLabels(points, width, height, padding) {
   });
 }
 
+function getCssVariable(name) {
+  return getComputedStyle(document.body).getPropertyValue(name).trim();
+}
+
 function clearChart() {
   const rect = chartCanvas.getBoundingClientRect();
   activeLinePoints = [];
@@ -331,10 +424,10 @@ function clearChart() {
 
 function updateChartStats(points) {
   const prices = points.map((point) => point.price);
-  statStart.textContent = currencyFormatter.format(points[0].price);
-  statCurrent.textContent = currencyFormatter.format(points[points.length - 1].price);
-  statHigh.textContent = currencyFormatter.format(Math.max(...prices));
-  statLow.textContent = currencyFormatter.format(Math.min(...prices));
+  statStart.textContent = eurCurrencyFormatter.format(points[0].price);
+  statCurrent.textContent = eurCurrencyFormatter.format(points[points.length - 1].price);
+  statHigh.textContent = eurCurrencyFormatter.format(Math.max(...prices));
+  statLow.textContent = eurCurrencyFormatter.format(Math.min(...prices));
 }
 
 function resetChartStats() {
@@ -431,7 +524,7 @@ function showChartTooltip(index) {
 
   chartTooltip.innerHTML = `
     <div class="tooltip-date">${formatTooltipDate(point.time)}</div>
-    <div class="tooltip-price">${currencyFormatter.format(point.price)}</div>
+    <div class="tooltip-price">${eurCurrencyFormatter.format(point.price)}</div>
   `;
   chartTooltip.hidden = false;
 
@@ -467,6 +560,24 @@ function formatTooltipDate(timestamp) {
   });
 }
 
+function setTheme(isDark) {
+  document.body.classList.toggle("dark-mode", isDark);
+  themeToggle.setAttribute("aria-pressed", String(isDark));
+  themeToggle.textContent = isDark ? "Light Mode" : "Dark Mode";
+  localStorage.setItem("crypto-tracker-theme", isDark ? "dark" : "light");
+
+  if (activeChartPoints.length > 1) {
+    hideChartTooltip();
+    drawChart(activeChartPoints);
+  }
+}
+
+function loadSavedTheme() {
+  const savedTheme = localStorage.getItem("crypto-tracker-theme");
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  setTheme(savedTheme ? savedTheme === "dark" : prefersDark);
+}
+
 coinCards.forEach((card) => {
   card.addEventListener("click", () => selectCoin(card.dataset.coin));
   card.addEventListener("keydown", (event) => {
@@ -487,6 +598,15 @@ rangeButtons.forEach((button) => {
   });
 });
 
+priceSource.addEventListener("change", () => {
+  selectedSource = priceSource.value;
+  loadPrices();
+});
+
+themeToggle.addEventListener("click", () => {
+  setTheme(!document.body.classList.contains("dark-mode"));
+});
+
 window.addEventListener("resize", () => {
   if (activeChartPoints.length > 1) {
     hideChartTooltip();
@@ -503,4 +623,5 @@ chartCanvas.addEventListener("mouseleave", () => {
   }
 });
 refreshButton.addEventListener("click", loadPrices);
+loadSavedTheme();
 loadPrices();
