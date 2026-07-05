@@ -55,6 +55,9 @@ crypto-tracker/
 │       ├── ltc.svg
 │       ├── sol.svg
 │       └── xmr.svg
+├── screenshots/
+│   ├── dashboard-desktop.svg
+│   └── dashboard-mobile.svg
 ├── index.html
 ├── styles.css
 ├── script.js
