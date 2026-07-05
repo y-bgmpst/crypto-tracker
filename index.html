@@ -1,167 +1,144 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
     <title>Crypto Price Tracker</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#" aria-label="Crypto Price Tracker">
+          <span class="brand-mark">C</span>
+          <span>Crypto Tracker</span>
+        </a>
+
+        <div class="language-switcher" aria-label="Language">
+          <button type="button" class="language-button active" data-language="en">EN</button>
+          <button type="button" class="language-button" data-language="de">DE</button>
+          <button type="button" class="language-button" data-language="es">ES</button>
+        </div>
+      </div>
+    </header>
+
     <main class="app-shell">
-      <header class="app-header">
+      <section class="page-heading">
         <div>
-          <p class="eyebrow">Live Marktpreise</p>
-          <h1>Crypto Price Tracker</h1>
+          <p class="eyebrow" data-i18n="eyebrow">Live digital asset markets</p>
+          <h1 data-i18n="title">Market overview</h1>
+          <p class="page-subtitle" data-i18n="subtitle">Track selected assets, compare prices and explore market history.</p>
         </div>
-        <div class="header-actions">
-          <label class="source-control" for="priceSource">
-            <span>Quelle</span>
-            <select id="priceSource">
-              <option value="coingecko">CoinGecko</option>
-              <option value="coinpaprika">CoinPaprika</option>
-              <option value="coinlore">CoinLore</option>
-            </select>
-          </label>
 
-          <button class="mode-toggle" id="themeToggle" type="button" aria-pressed="false">
-            Dark Mode
-          </button>
-
-          <button class="mode-toggle" id="autoUpdateToggle" type="button" aria-pressed="false">
-            Auto Update aus
-          </button>
-
-          <button class="refresh-button" id="refreshButton" type="button">
-            Aktualisieren
-          </button>
+        <div class="market-status" aria-live="polite">
+          <span class="status-dot"></span>
+          <div>
+            <strong id="statusText" data-i18n="loadingPrices">Loading prices...</strong>
+            <span id="lastUpdated"></span>
+          </div>
         </div>
-      </header>
-
-      <section class="status-row" aria-live="polite">
-        <span id="statusText">Preise werden geladen...</span>
-        <span id="lastUpdated"></span>
       </section>
 
-      <section class="price-grid" id="priceGrid" aria-label="Kryptowaehrungspreise">
-        <article class="coin-card" data-coin="bitcoin" data-name="Bitcoin" data-symbol="BTC" role="button" tabindex="0">
-          <div class="coin-topline">
-            <div>
-              <h2>Bitcoin</h2>
-              <p>BTC</p>
-            </div>
-            <span class="coin-symbol">BTC</span>
-          </div>
-          <p class="price" data-price>--</p>
-          <p class="change" data-change>24h: --</p>
-        </article>
+      <section class="control-bar" aria-label="Market controls">
+        <label class="control-field" for="coinPicker">
+          <span data-i18n="addCoin">Add coin</span>
+          <select id="coinPicker" disabled>
+            <option value="" data-i18n="loadingTop50">Loading top 50...</option>
+          </select>
+        </label>
 
-        <article class="coin-card" data-coin="monero" data-name="Monero" data-symbol="XMR" role="button" tabindex="0">
-          <div class="coin-topline">
-            <div>
-              <h2>Monero</h2>
-              <p>XMR</p>
-            </div>
-            <span class="coin-symbol">XMR</span>
-          </div>
-          <p class="price" data-price>--</p>
-          <p class="change" data-change>24h: --</p>
-        </article>
+        <label class="control-field" for="fiatCurrency">
+          <span data-i18n="currency">Currency</span>
+          <select id="fiatCurrency">
+            <option value="usd">USD - US Dollar</option>
+            <option value="eur">EUR - Euro</option>
+            <option value="gbp">GBP - British Pound</option>
+            <option value="jpy">JPY - Japanese Yen</option>
+            <option value="chf">CHF - Swiss Franc</option>
+          </select>
+        </label>
 
-        <article class="coin-card" data-coin="litecoin" data-name="Litecoin" data-symbol="LTC" role="button" tabindex="0">
-          <div class="coin-topline">
-            <div>
-              <h2>Litecoin</h2>
-              <p>LTC</p>
-            </div>
-            <span class="coin-symbol">LTC</span>
-          </div>
-          <p class="price" data-price>--</p>
-          <p class="change" data-change>24h: --</p>
-        </article>
+        <div class="control-actions">
+          <button class="secondary-button" id="themeToggle" type="button" aria-pressed="false" data-i18n="darkMode">Dark mode</button>
+          <button class="secondary-button" id="autoUpdateToggle" type="button" aria-pressed="false" data-i18n="autoUpdateOff">Auto update off</button>
+          <button class="primary-button" id="refreshButton" type="button" data-i18n="refresh">Refresh</button>
+        </div>
+      </section>
 
-        <article class="coin-card" data-coin="solana" data-name="Solana" data-symbol="SOL" role="button" tabindex="0">
-          <div class="coin-topline">
-            <div>
-              <h2>Solana</h2>
-              <p>SOL</p>
-            </div>
-            <span class="coin-symbol">SOL</span>
+      <section class="market-section" aria-labelledby="watchlistTitle">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow" data-i18n="watchlistEyebrow">Watchlist</p>
+            <h2 id="watchlistTitle" data-i18n="selectedMarkets">Selected markets</h2>
           </div>
-          <p class="price" data-price>--</p>
-          <p class="change" data-change>24h: --</p>
-        </article>
+          <span class="selection-count" id="selectionCount">2 / 50</span>
+        </div>
+
+        <div class="price-grid" id="priceGrid" aria-live="polite"></div>
       </section>
 
       <section class="chart-panel" id="chartPanel" aria-live="polite">
         <div class="chart-header">
-          <div>
-            <p class="eyebrow">Historie</p>
-            <h2 id="chartTitle">Waehle eine Waehrung</h2>
+          <div class="chart-identity">
+            <img id="chartCoinImage" class="chart-coin-image" alt="" hidden>
+            <div>
+              <p class="eyebrow" data-i18n="history">Price history</p>
+              <h2 id="chartTitle" data-i18n="selectCoin">Select a coin</h2>
+            </div>
           </div>
-          <div class="range-controls" aria-label="Chart-Zeitraum">
+
+          <div class="range-controls" aria-label="Chart range">
             <button type="button" class="range-button active" data-days="1">1D</button>
             <button type="button" class="range-button" data-days="3">3D</button>
             <button type="button" class="range-button" data-days="7">1W</button>
             <button type="button" class="range-button" data-days="30">1M</button>
-            <button type="button" class="range-button" data-days="365">1J</button>
-            <button type="button" class="range-button" data-days="max">All Time</button>
+            <button type="button" class="range-button" data-days="365">1Y</button>
+            <button type="button" class="range-button" data-days="max" data-i18n="allTime">All time</button>
           </div>
         </div>
 
-        <p class="chart-status" id="chartStatus">Klicke auf BTC, XMR, LTC oder SOL, um den Graphen zu laden.</p>
+        <p class="chart-status" id="chartStatus" data-i18n="chartPrompt">Choose a market card to load its history.</p>
 
         <div class="chart-canvas-wrap">
-          <canvas id="historyChart" width="1000" height="420">
-            Dein Browser unterstuetzt Canvas nicht.
+          <canvas id="historyChart" width="1200" height="430">
+            Your browser does not support canvas.
           </canvas>
           <div class="chart-tooltip" id="chartTooltip" hidden></div>
         </div>
 
-        <dl class="chart-stats" id="chartStats">
-          <div>
-            <dt>Start</dt>
-            <dd id="statStart">--</dd>
-          </div>
-          <div>
-            <dt>Aktuell</dt>
-            <dd id="statCurrent">--</dd>
-          </div>
-          <div>
-            <dt>Hoch</dt>
-            <dd id="statHigh">--</dd>
-          </div>
-          <div>
-            <dt>Tief</dt>
-            <dd id="statLow">--</dd>
-          </div>
+        <dl class="chart-stats">
+          <div><dt data-i18n="start">Start</dt><dd id="statStart">--</dd></div>
+          <div><dt data-i18n="current">Current</dt><dd id="statCurrent">--</dd></div>
+          <div><dt data-i18n="high">High</dt><dd id="statHigh">--</dd></div>
+          <div><dt data-i18n="low">Low</dt><dd id="statLow">--</dd></div>
         </dl>
       </section>
 
       <section class="donation-panel" aria-labelledby="donationTitle">
-        <div class="donation-header">
-          <p class="eyebrow">Support</p>
-          <h2 id="donationTitle">Spenden Wallets</h2>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow" data-i18n="support">Support</p>
+            <h2 id="donationTitle" data-i18n="donationWallets">Donation wallets</h2>
+          </div>
         </div>
 
         <div class="wallet-grid">
           <article class="wallet-card">
-            <img class="wallet-logo" src="assets/icons/btc.svg" alt="Bitcoin Logo">
-            <code>bc1qxdgynztnxpt8t9pdudpuahuuu52rjrex6xxjs9</code>
+            <img class="wallet-logo" src="assets/icons/btc.svg" alt="Bitcoin logo">
+            <div><strong>Bitcoin</strong><code>bc1qxdgynztnxpt8t9pdudpuahuuu52rjrex6xxjs9</code></div>
           </article>
-
           <article class="wallet-card">
-            <img class="wallet-logo" src="assets/icons/xmr.svg" alt="Monero Logo">
-            <code>85jA1NFm6x7Z7RVxjtNV3vftBYU1YLx1JDwJnNhKPwjLJ4QyHsHLipdbBi7jxzsxd13xwFwqSUJtQMdkx7nBnPbWLetbgwU</code>
+            <img class="wallet-logo" src="assets/icons/xmr.svg" alt="Monero logo">
+            <div><strong>Monero</strong><code>85jA1NFm6x7Z7RVxjtNV3vftBYU1YLx1JDwJnNhKPwjLJ4QyHsHLipdbBi7jxzsxd13xwFwqSUJtQMdkx7nBnPbWLetbgwU</code></div>
           </article>
-
           <article class="wallet-card">
-            <img class="wallet-logo" src="assets/icons/ltc.svg" alt="Litecoin Logo">
-            <code>ltc1qrw62e07agp8rvkyzmgd78y2uv24hj2g9hzzpuc</code>
+            <img class="wallet-logo" src="assets/icons/ltc.svg" alt="Litecoin logo">
+            <div><strong>Litecoin</strong><code>ltc1qrw62e07agp8rvkyzmgd78y2uv24hj2g9hzzpuc</code></div>
           </article>
-
           <article class="wallet-card">
-            <img class="wallet-logo" src="assets/icons/sol.svg" alt="Solana Logo">
-            <code>EccvtqGyLMLjRjMb8LpKYNk9kWKqLsw6QzVJ4P6g5YAh</code>
+            <img class="wallet-logo" src="assets/icons/sol.svg" alt="Solana logo">
+            <div><strong>Solana</strong><code>EccvtqGyLMLjRjMb8LpKYNk9kWKqLsw6QzVJ4P6g5YAh</code></div>
           </article>
         </div>
       </section>
