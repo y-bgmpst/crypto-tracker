@@ -1,42 +1,39 @@
 # Crypto Price Tracker
 
-Eine einfache statische Web-App zum Anzeigen aktueller Krypto-Preise und historischer Preisverlaeufe fuer Bitcoin, Monero, Litecoin und Solana.
+A responsive market dashboard for tracking cryptocurrencies with live prices and historical charts.
 
-Die App besteht nur aus HTML, CSS und JavaScript. Es gibt keinen Build-Prozess, keine Paketverwaltung und kein Backend. Alle Daten werden im Browser ueber die oeffentliche CoinGecko API geladen.
+The app uses plain HTML, CSS and JavaScript. It has no build step, package manager or backend.
 
 ## Features
 
-- Aktuelle Preise fuer:
-  - Bitcoin (BTC)
-  - Monero (XMR)
-  - Litecoin (LTC)
-  - Solana (SOL)
-- Anzeige der 24h-Preisveraenderung
-- Auswahl der Preisquelle:
-  - CoinGecko
-  - CoinPaprika
-  - CoinLore
-- Dark Mode mit gespeicherter Einstellung
-- Optionales Auto-Update fuer aktuelle Preise
-- Klickbare Coin-Karten
-- Historien-Graph fuer die ausgewaehlte Kryptowaehrung
-- Zeitraum-Auswahl:
-  - 1D
-  - 3D
-  - 1W
-  - 1M
-  - 1J
-  - All Time
-- Statistik unter dem Graphen:
-  - Startpreis
-  - aktueller Preis
-  - Hoechstpreis
-  - Tiefstpreis
-- Responsive Layout fuer Desktop und Smartphone
-- Keine externen JavaScript-Bibliotheken
-- Lokale Coin-Logos fuer Spenden-Wallets
+- Bitcoin and Litecoin selected by default
+- Dropdown containing the top 50 cryptocurrencies by market capitalization
+- Add and remove market cards dynamically
+- Five fiat currencies:
+  - USD
+  - EUR
+  - GBP
+  - JPY
+  - CHF
+- Complete interface translations:
+  - English
+  - German
+  - Spanish
+- Current price and 24-hour change
+- Historical charts for:
+  - 1 day
+  - 3 days
+  - 1 week
+  - 1 month
+  - 1 year
+  - all time
+- Hover tooltips with timestamp and price
+- Dark mode with saved preference
+- Optional five-minute auto-update
+- Responsive desktop and mobile layout
+- Donation wallets with local CC0 coin icons
 
-## Projektstruktur
+## Project structure
 
 ```text
 crypto-tracker/
@@ -53,128 +50,68 @@ crypto-tracker/
 └── README.md
 ```
 
-## Verwendete API
+## Data source
 
-Die App nutzt die oeffentliche CoinGecko API.
+The app uses the public CoinGecko API.
 
-Alternativ koennen aktuelle Preise ueber das Dropdown auch von CoinPaprika oder CoinLore geladen werden.
-
-Aktuelle Preise:
+Top-50 market data and fiat prices:
 
 ```text
-https://api.coingecko.com/api/v3/simple/price
-https://api.coinpaprika.com/v1/tickers/{coin-id}?quotes=EUR
-https://api.coinlore.net/api/ticker/?id={coin-ids}
+https://api.coingecko.com/api/v3/coins/markets
 ```
 
-Historische Preise:
+Historical prices:
 
 ```text
 https://api.coingecko.com/api/v3/coins/{coin-id}/market_chart
 ```
 
-Verwendete CoinGecko IDs:
+The top-50 list is ordered by market capitalization and refreshed together with the displayed prices.
 
-| Waehrung | Symbol | CoinGecko ID |
-| --- | --- | --- |
-| Bitcoin | BTC | `bitcoin` |
-| Monero | XMR | `monero` |
-| Litecoin | LTC | `litecoin` |
-| Solana | SOL | `solana` |
+## Run locally
 
-## Bildquellen
-
-Die Coin-Logos in `assets/icons/` stammen aus dem Projekt `cryptocurrency-icons`.
-
-Das Projekt steht unter `CC0-1.0`, die Icons sind damit frei nutzbar.
-
-## App starten
-
-Da es sich um eine statische Web-App handelt, reicht ein einfacher lokaler Webserver.
-
-Im Projektordner ausfuehren:
+Start a static web server in the project directory:
 
 ```bash
 python3 -m http.server 8001
 ```
 
-Danach im Browser oeffnen:
+Open:
 
 ```text
 http://127.0.0.1:8001/
 ```
 
-Falls Port `8001` belegt ist, kann ein anderer Port verwendet werden:
+If port `8001` is unavailable, use another port:
 
 ```bash
 python3 -m http.server 8080
 ```
 
-Dann entsprechend oeffnen:
+## Usage
 
-```text
-http://127.0.0.1:8080/
-```
+1. Bitcoin and Litecoin are shown after the first market request.
+2. Use `Add coin` to add another asset from the current top 50.
+3. Remove an asset with the close button on its market card.
+4. Select USD, EUR, GBP, JPY or CHF from the currency dropdown.
+5. Use EN, DE or ES in the top bar to translate the interface.
+6. Select a market card to load its historical chart.
+7. Enable auto-update to refresh market prices every five minutes.
 
-## Nutzung
+## Rate-limit behavior
 
-1. Die App laedt beim Start automatisch die aktuellen Preise.
-2. Ueber das Dropdown `Quelle` kann zwischen CoinGecko, CoinPaprika und CoinLore gewechselt werden.
-3. Mit dem Button `Dark Mode` kann zwischen hellem und dunklem Theme gewechselt werden.
-4. Mit dem Button `Auto Update` kann eine automatische Aktualisierung aktiviert werden.
-5. Mit dem Button `Aktualisieren` werden die aktuellen Preise sofort neu geladen.
-6. Durch Klick auf eine Coin-Karte wird unten der Historien-Graph geladen.
-7. Mit den Zeitraum-Buttons kann zwischen `1D`, `3D`, `1W`, `1M`, `1J` und `All Time` gewechselt werden.
+- One top-50 market request updates every displayed card.
+- Auto-update uses a conservative five-minute interval.
+- Auto-update pauses while the browser tab is hidden.
+- Failed market requests use a ten-minute retry delay.
+- Historical data is cached per coin, fiat currency and time range for the current session.
 
-## Technische Details
+## Image source
 
-### `index.html`
+The local coin icons in `assets/icons/` come from the `cryptocurrency-icons` project and are licensed under `CC0-1.0`.
 
-Enthaelt die Grundstruktur der App:
+## License
 
-- Header
-- Aktualisieren-Button
-- Coin-Karten
-- Chart-Bereich
-- Statistik-Bereich
+This project is licensed under the GNU General Public License v3.0 or later (`GPL-3.0-or-later`).
 
-### `styles.css`
-
-Enthaelt das komplette Styling:
-
-- responsives Grid
-- klickbare Coin-Karten
-- Chart-Panel
-- Zeitraum-Buttons
-- mobile Anpassungen
-
-### `script.js`
-
-Enthaelt die komplette App-Logik:
-
-- Laden aktueller Preise
-- Wechsel zwischen mehreren kostenlosen Preisquellen
-- Konservatives Auto-Update alle 5 Minuten
-- Laden historischer Preise
-- Caching bereits geladener Historien-Daten
-- Zeichnen des Graphen mit Canvas
-- Aktualisieren der Statistikwerte
-- Wechsel zwischen Coins und Zeitraeumen
-
-## Hinweise
-
-- Die CoinGecko API kann Rate Limits haben. Wenn zu viele Anfragen in kurzer Zeit gestellt werden, kann das Laden kurzzeitig fehlschlagen.
-- Das Auto-Update nutzt ein konservatives Intervall von 5 Minuten und pausiert, wenn der Browser-Tab im Hintergrund ist.
-- Nach einem Ladefehler wartet das Auto-Update 10 Minuten bis zum naechsten Versuch.
-- Auto-Update aktualisiert nur die aktuellen Preise, nicht die Historien-Charts.
-- Die App nutzt Euro (`EUR`) als Preiswaehrung.
-- CoinGecko und CoinPaprika liefern die aktuellen Preise in Euro (`EUR`).
-- CoinLore liefert die einfache Ticker-Route in US-Dollar (`USD`), daher werden CoinLore-Preise in USD angezeigt.
-- Fuer All-Time-Daten kann die API-Antwort groesser sein als bei kurzen Zeitraeumen.
-- Da alles im Browser laeuft, wird kein API-Key gespeichert oder benoetigt.
-
-## Lizenz
-
-Dieses Projekt steht unter der GNU General Public License v3.0 oder spaeter (`GPL-3.0-or-later`).
-
-FOSS ist Freiheit. Sharing is caring.
+FOSS is freedom. Sharing is caring.
