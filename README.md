@@ -4,6 +4,18 @@ A responsive market dashboard for tracking cryptocurrencies with live prices and
 
 The app uses plain HTML, CSS and JavaScript. It has no build step, package manager or backend.
 
+## Screenshots
+
+### Desktop market dashboard
+
+![Desktop market dashboard](screenshots/dashboard-desktop.svg)
+
+### Responsive mobile view
+
+<img src="screenshots/dashboard-mobile.svg" alt="Responsive mobile market dashboard" width="360">
+
+> Screenshots use representative market data for a deterministic UI capture.
+
 ## Features
 
 - Bitcoin and Litecoin selected by default
